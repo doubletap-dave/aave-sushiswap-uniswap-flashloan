@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./utils/FlashLoanReceiverBaseV2.sol";
-import "./utils/Withdrawable.sol";
-import "./../interfaces/IUniswapV2Pair.sol";
-import "./../interfaces/IUniswapV2Router02.sol";
-import "./../interfaces/IUniswapV2Factory.sol";
+import "../utils/FlashLoanReceiverBaseV2.sol";
+import "../utils/Withdrawable.sol";
+import "../interfaces/IUniswapV2Pair.sol";
+import "../interfaces/IUniswapV2Router02.sol";
+import "../interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {

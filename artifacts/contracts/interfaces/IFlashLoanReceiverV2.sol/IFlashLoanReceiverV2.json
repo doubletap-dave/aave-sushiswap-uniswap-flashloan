@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "FlashLoanReceiverBaseV2",
-  "sourceName": "contracts/utils/FlashLoanReceiverBaseV2.sol",
+  "contractName": "IFlashLoanReceiverV2",
+  "sourceName": "contracts/interfaces/IFlashLoanReceiverV2.sol",
   "abi": [
     {
       "inputs": [],

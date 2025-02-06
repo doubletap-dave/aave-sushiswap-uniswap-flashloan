@@ -10,7 +10,17 @@ if (dotenvResult.error) {
   throw dotenvResult.error;
 }
 
+// Configure source directory mappings
+const path = require("path");
+
 module.exports = {
+  // Source directory configuration
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  },
   solidity: {
     compilers: [
       {

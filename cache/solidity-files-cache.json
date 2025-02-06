@@ -1,52 +1,9 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\FlashloanV2.sol": {
-      "lastModificationDate": 1738875154226,
-      "contentHash": "1ce586bd539d34481168ea2506631694",
-      "sourceName": "contracts/FlashloanV2.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./utils/FlashLoanReceiverBaseV2.sol",
-        "./utils/Withdrawable.sol",
-        "./../interfaces/IUniswapV2Pair.sol",
-        "./../interfaces/IUniswapV2Router02.sol",
-        "./../interfaces/IUniswapV2Factory.sol",
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "FlashloanV2"
-      ]
-    },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\utils\\FlashLoanReceiverBaseV2.sol": {
-      "lastModificationDate": 1738871198410,
-      "contentHash": "1ea61b65a7e905d7b79c1b8a527fd030",
+      "lastModificationDate": 1738878493586,
+      "contentHash": "44638c4641d60d7a6217db2b716ca488",
       "sourceName": "contracts/utils/FlashLoanReceiverBaseV2.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -73,10 +30,9 @@
         }
       },
       "imports": [
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "./../../interfaces/IFlashLoanReceiverV2.sol",
-        "./../../interfaces/ILendingPoolAddressesProviderV2.sol",
-        "./../../interfaces/ILendingPoolV2.sol"
+        "../interfaces/IFlashLoanReceiverV2.sol",
+        "../interfaces/ILendingPoolAddressesProviderV2.sol",
+        "../interfaces/ILendingPoolV2.sol"
       ],
       "versionPragmas": [
         "^0.8.0"
@@ -125,116 +81,6 @@
         "Withdrawable"
       ]
     },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\IUniswapV2Router02.sol": {
-      "lastModificationDate": 1738871198412,
-      "contentHash": "d6bcdb5fe09c9966e8649cd784c72e7c",
-      "sourceName": "interfaces/IUniswapV2Router02.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./IUniswapV2Router01.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IUniswapV2Router02"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\IUniswapV2Factory.sol": {
-      "lastModificationDate": 1738871198411,
-      "contentHash": "0dc435c770050333410f6542f222e670",
-      "sourceName": "interfaces/IUniswapV2Factory.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IUniswapV2Factory"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\IUniswapV2Pair.sol": {
-      "lastModificationDate": 1738871198411,
-      "contentHash": "5fc453427ea641a4fe81501ddbad9e6b",
-      "sourceName": "interfaces/IUniswapV2Pair.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.6.6"
-      ],
-      "artifacts": [
-        "IUniswapV2Pair"
-      ]
-    },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol": {
       "lastModificationDate": 1738873393312,
       "contentHash": "8f19f64d2adadf448840908bbaf431c8",
@@ -269,156 +115,6 @@
       ],
       "artifacts": [
         "IERC20"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\IFlashLoanReceiverV2.sol": {
-      "lastModificationDate": 1738871198410,
-      "contentHash": "87e7b9133e3d4e4f13bc4037c8bc09bd",
-      "sourceName": "interfaces/IFlashLoanReceiverV2.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./ILendingPoolAddressesProviderV2.sol",
-        "./ILendingPoolV2.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IFlashLoanReceiverV2"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\ILendingPoolAddressesProviderV2.sol": {
-      "lastModificationDate": 1738871198410,
-      "contentHash": "a8ab8895f0716d6ba91e9f646cae982a",
-      "sourceName": "interfaces/ILendingPoolAddressesProviderV2.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ILendingPoolAddressesProviderV2"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\ILendingPoolV2.sol": {
-      "lastModificationDate": 1738871198411,
-      "contentHash": "2088576d206e2d7e98a22ae3e23bb112",
-      "sourceName": "interfaces/ILendingPoolV2.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./ILendingPoolAddressesProviderV2.sol",
-        "../libraries/DataTypes.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ILendingPoolV2"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\libraries\\DataTypes.sol": {
-      "lastModificationDate": 1738871198412,
-      "contentHash": "542ffd4def76ff56153229ae97007ed8",
-      "sourceName": "libraries/DataTypes.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "DataTypes"
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
@@ -798,46 +494,10 @@
         "IERC165"
       ]
     },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\interfaces\\IUniswapV2Router01.sol": {
-      "lastModificationDate": 1738871198411,
-      "contentHash": "833937a92127c59d25c93741a8f3bf6c",
-      "sourceName": "interfaces/IUniswapV2Router01.sol",
-      "solcConfig": {
-        "version": "0.8.28",
-        "settings": {
-          "evmVersion": "paris",
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IUniswapV2Router01"
-      ]
-    },
-    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\Lock.sol": {
-      "lastModificationDate": 1738873250966,
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\core\\TimeLock.sol": {
+      "lastModificationDate": 1738876686230,
       "contentHash": "7eee587c347fe6b1de50c96688cb9477",
-      "sourceName": "contracts/Lock.sol",
+      "sourceName": "contracts/core/TimeLock.sol",
       "solcConfig": {
         "version": "0.8.28",
         "settings": {
@@ -868,6 +528,385 @@
       ],
       "artifacts": [
         "Lock"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\core\\Withdrawable.sol": {
+      "lastModificationDate": 1738876686231,
+      "contentHash": "8b89ce85a739f63199f11ebb13119797",
+      "sourceName": "contracts/core/Withdrawable.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Withdrawable"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\flashloan\\FlashloanArbitrage.sol": {
+      "lastModificationDate": 1738877802591,
+      "contentHash": "e7a12e4a5b7f18efbe46ca765cf9e9f3",
+      "sourceName": "contracts/flashloan/FlashloanArbitrage.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/FlashLoanReceiverBaseV2.sol",
+        "../utils/Withdrawable.sol",
+        "../interfaces/IUniswapV2Pair.sol",
+        "../interfaces/IUniswapV2Router02.sol",
+        "../interfaces/IUniswapV2Factory.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "FlashloanV2"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IUniswapV2Pair.sol": {
+      "lastModificationDate": 1738871198411,
+      "contentHash": "5fc453427ea641a4fe81501ddbad9e6b",
+      "sourceName": "contracts/interfaces/IUniswapV2Pair.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.6"
+      ],
+      "artifacts": [
+        "IUniswapV2Pair"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IUniswapV2Router02.sol": {
+      "lastModificationDate": 1738871198412,
+      "contentHash": "d6bcdb5fe09c9966e8649cd784c72e7c",
+      "sourceName": "contracts/interfaces/IUniswapV2Router02.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IUniswapV2Router01.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IUniswapV2Router02"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IUniswapV2Factory.sol": {
+      "lastModificationDate": 1738871198411,
+      "contentHash": "0dc435c770050333410f6542f222e670",
+      "sourceName": "contracts/interfaces/IUniswapV2Factory.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IUniswapV2Factory"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IFlashLoanReceiverV2.sol": {
+      "lastModificationDate": 1738871198410,
+      "contentHash": "87e7b9133e3d4e4f13bc4037c8bc09bd",
+      "sourceName": "contracts/interfaces/IFlashLoanReceiverV2.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ILendingPoolAddressesProviderV2.sol",
+        "./ILendingPoolV2.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IFlashLoanReceiverV2"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\ILendingPoolAddressesProviderV2.sol": {
+      "lastModificationDate": 1738871198410,
+      "contentHash": "a8ab8895f0716d6ba91e9f646cae982a",
+      "sourceName": "contracts/interfaces/ILendingPoolAddressesProviderV2.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ILendingPoolAddressesProviderV2"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\ILendingPoolV2.sol": {
+      "lastModificationDate": 1738871198411,
+      "contentHash": "2088576d206e2d7e98a22ae3e23bb112",
+      "sourceName": "contracts/interfaces/ILendingPoolV2.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ILendingPoolAddressesProviderV2.sol",
+        "../libraries/DataTypes.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ILendingPoolV2"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\libraries\\DataTypes.sol": {
+      "lastModificationDate": 1738871198412,
+      "contentHash": "542ffd4def76ff56153229ae97007ed8",
+      "sourceName": "contracts/libraries/DataTypes.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DataTypes"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IUniswapV2Router01.sol": {
+      "lastModificationDate": 1738871198411,
+      "contentHash": "833937a92127c59d25c93741a8f3bf6c",
+      "sourceName": "contracts/interfaces/IUniswapV2Router01.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IUniswapV2Router01"
       ]
     }
   }

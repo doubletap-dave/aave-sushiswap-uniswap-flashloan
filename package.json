@@ -2,6 +2,14 @@
   "name": "aave-sushiswap-uniswap-flashloan",
   "version": "1.0.0",
   "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "clean": "hardhat clean"
+  },
+  "engines": {
+    "node": ">=18.0.0 <23.0.0"
+  },
   "repository": "https://github.com/doubletap-dave/aave-sushiswap-uniswap-flashloan.git",
   "author": "Dave M. <25110228+doubletap-dave@users.noreply.github.com>",
   "license": "MIT",
