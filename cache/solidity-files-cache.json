@@ -571,8 +571,8 @@
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\flashloan\\FlashloanArbitrage.sol": {
-      "lastModificationDate": 1738880715529,
-      "contentHash": "9bf7d3874f8df406dab71f97efbc6429",
+      "lastModificationDate": 1738881543650,
+      "contentHash": "a12a56359a618855ecad8aaa8ffdbab7",
       "sourceName": "contracts/flashloan/FlashloanArbitrage.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -607,10 +607,10 @@
         "@openzeppelin/contracts/token/ERC20/IERC20.sol"
       ],
       "versionPragmas": [
-        "^0.8.0"
+        "^0.8.20"
       ],
       "artifacts": [
-        "FlashloanV2"
+        "FlashloanArbitrage"
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\interfaces\\IUniswapV2Pair.sol": {

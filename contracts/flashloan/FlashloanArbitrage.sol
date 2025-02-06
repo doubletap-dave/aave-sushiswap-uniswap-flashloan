@@ -104,13 +104,9 @@ contract FlashloanArbitrage is FlashLoanReceiverBaseV2, Withdrawable {
         uint256 borrowedAmount = amounts[0];
         uint256 premiumAmount = premiums[0];
 
-        try {
-            (address swappingPair) = abi.decode(params, (address));
-            uint256 amountOut = makeArbitrage(borrowedAsset, borrowedAmount, swappingPair);
-            emit ArbitrageExecuted(borrowedAsset, swappingPair, amountOut);
-        } catch {
-            // Ensure we can still repay the flash loan even if arbitrage fails
-        }
+        address swappingPair = abi.decode(params, (address));
+        uint256 amountOut = makeArbitrage(borrowedAsset, borrowedAmount, swappingPair);
+        emit ArbitrageExecuted(borrowedAsset, swappingPair, amountOut);
 
         uint256 amountOwing = borrowedAmount + premiumAmount;
         IERC20(borrowedAsset).approve(address(LENDING_POOL), amountOwing);
@@ -118,13 +114,11 @@ contract FlashloanArbitrage is FlashLoanReceiverBaseV2, Withdrawable {
     }
 
     function calculateArbitrageProfitEstimate(
-        address token0,
-        address token1,
         uint256 amount,
         uint256 uniswapPrice,
         uint256 sushiswapPrice
     ) external view returns (uint256) {
-        if (amount == 0 || token0 == address(0) || token1 == address(0)) return 0;
+        if (amount == 0 || uniswapPrice == 0 || sushiswapPrice == 0) return 0;
         
         uint256 profit = 0;
         if (uniswapPrice > sushiswapPrice) {
@@ -208,7 +202,6 @@ contract FlashloanArbitrage is FlashLoanReceiverBaseV2, Withdrawable {
                 _borrowedAsset
             );
         }
-
         require(amountFinal > _borrowedAmount, "Insufficient profit");
         return amountFinal;
     }
@@ -281,6 +274,7 @@ contract FlashloanArbitrage is FlashLoanReceiverBaseV2, Withdrawable {
         address[] memory path = new address[](2);
         path[0] = sellToken;
         path[1] = buyToken;
-        return IUniswapV2Router02(routerAddress).getAmountsOut(amount, path)[1];
+        uint256[] memory amounts = IUniswapV2Router02(routerAddress).getAmountsOut(amount, path);
+        return amounts[1];
     }
 }

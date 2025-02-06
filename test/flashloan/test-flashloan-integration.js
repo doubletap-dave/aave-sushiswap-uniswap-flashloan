@@ -13,9 +13,9 @@ describe("Flashloan Integration Tests", function () {
         const MockLendingPoolAddressesProvider = await ethers.getContractFactory("MockLendingPoolAddressesProvider");
         const mockAddressesProvider = await MockLendingPoolAddressesProvider.deploy(mockLendingPool.target);
 
-        // Deploy FlashloanV2 contract
-        const FlashloanV2 = await ethers.getContractFactory("FlashloanV2");
-        const flashloan = await FlashloanV2.deploy(
+        // Deploy FlashloanArbitrage contract
+        const FlashloanArbitrage = await ethers.getContractFactory("FlashloanArbitrage");
+        const flashloan = await FlashloanArbitrage.deploy(
             mockAddressesProvider.target,
             "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // Uniswap V2 Router
             "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"  // Sushiswap Router
@@ -32,9 +32,9 @@ describe("Flashloan Integration Tests", function () {
 
     describe("End-to-End Arbitrage Flow", function () {
         it("Should execute complete arbitrage between Uniswap and Sushiswap", async function () {
-            const { flashloan, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
+            const { flashloan, mockLendingPool, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
             
-            const initialBalance = await WETH.balanceOf(owner.address);
+            const initialBalance = await WETH.balanceOf(mockLendingPool.target);
             
             // Execute flashloan with arbitrage
             const loanAmount = ethers.parseEther("100");
@@ -44,12 +44,12 @@ describe("Flashloan Integration Tests", function () {
                 loanAmount
             );
             
-            const finalBalance = await WETH.balanceOf(owner.address);
+            const finalBalance = await WETH.balanceOf(mockLendingPool.target);
             expect(finalBalance).to.be.gt(initialBalance, "Arbitrage should generate profit");
         });
 
         it("Should respect price difference thresholds", async function () {
-            const { flashloan, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
+            const { flashloan, mockLendingPool, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
             
             // Set minimum profit threshold
             const minProfit = ethers.parseEther("0.1");
@@ -113,7 +113,7 @@ describe("Flashloan Integration Tests", function () {
         it("Should execute arbitrage across multiple DEXes", async function () {
             const { flashloan, WETH, DAI, USDC, owner } = await loadFixture(deployFlashloanFixture);
             
-            const initialBalance = await WETH.balanceOf(owner.address);
+            const initialBalance = await WETH.balanceOf(mockLendingPool.target);
             
             // Set up mock DEX data
             const dexPrices = [
@@ -133,7 +133,7 @@ describe("Flashloan Integration Tests", function () {
             const receipt = await tx.wait();
             expect(receipt.events).to.have.lengthOf.above(0);
             
-            const finalBalance = await WETH.balanceOf(owner.address);
+            const finalBalance = await WETH.balanceOf(mockLendingPool.target);
             expect(finalBalance).to.be.gt(initialBalance, "Multi-DEX arbitrage should be profitable");
         });
 
@@ -162,7 +162,7 @@ describe("Flashloan Integration Tests", function () {
 
     describe("Error Handling and Recovery", function () {
         it("Should handle DEX liquidity limitations", async function () {
-            const { flashloan, WETH, DAI } = await loadFixture(deployFlashloanFixture);
+            const { flashloan, mockLendingPool, WETH, DAI } = await loadFixture(deployFlashloanFixture);
             
             // Attempt arbitrage with amount exceeding DEX liquidity
             const largeAmount = ethers.parseEther("10000000"); // Very large amount
@@ -177,9 +177,9 @@ describe("Flashloan Integration Tests", function () {
         });
 
         it("Should recover from failed arbitrage attempts", async function () {
-            const { flashloan, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
+            const { flashloan, mockLendingPool, WETH, DAI, owner } = await loadFixture(deployFlashloanFixture);
             
-            const initialBalance = await WETH.balanceOf(owner.address);
+            const initialBalance = await WETH.balanceOf(mockLendingPool.target);
             
             // Simulate failed arbitrage
             await flashloan.setSimulateFailure(true);
@@ -193,7 +193,7 @@ describe("Flashloan Integration Tests", function () {
             ).to.be.revertedWith("Arbitrage execution failed");
             
             // Verify funds are returned
-            const finalBalance = await WETH.balanceOf(owner.address);
+            const finalBalance = await WETH.balanceOf(mockLendingPool.target);
             expect(finalBalance).to.equal(initialBalance, "Funds should be returned after failed arbitrage");
         });
     });
