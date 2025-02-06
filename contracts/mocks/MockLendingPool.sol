@@ -176,7 +176,6 @@ contract MockLendingPool is ILendingPoolV2 {
     function getUserReserveData(address asset, address user)
         external
         view
-        override
         returns (
             uint256 currentATokenBalance,
             uint256 currentStableDebt,
@@ -195,7 +194,6 @@ contract MockLendingPool is ILendingPoolV2 {
     function getReserveTokensAddresses(address asset)
         external
         view
-        override
         returns (
             address aTokenAddress,
             address stableDebtTokenAddress,

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ILendingPoolV1.sol";
@@ -11,6 +12,7 @@ contract FlashloanV1 is Ownable {
 
     address private constant ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     ILendingPoolV1 public immutable LENDING_POOL;
+    uint256 private constant FLASHLOAN_FEE = 9; // 0.09% fee
 
     event FlashLoanExecuted(address token, uint256 amount);
 
@@ -18,7 +20,6 @@ contract FlashloanV1 is Ownable {
         LENDING_POOL = ILendingPoolV1(_lendingPool);
     }
 
-    // Function to receive ETH
     receive() external payable {}
 
     function flashloan(address _token) external onlyOwner {
@@ -28,7 +29,7 @@ contract FlashloanV1 is Ownable {
         if (_token == ETH_ADDRESS) {
             amount = 1 ether; // Default amount for ETH
         } else {
-            amount = 1000 * (10 ** IERC20(_token).decimals()); // Default amount for tokens
+            amount = 1000 * (10 ** IERC20Metadata(_token).decimals()); // Default amount for tokens
         }
 
         _executeFlashloan(_token, amount);
@@ -42,11 +43,14 @@ contract FlashloanV1 is Ownable {
     }
 
     function _executeFlashloan(address _token, uint256 _amount) internal {
+        // Calculate fee
+        uint256 fee = (_amount * FLASHLOAN_FEE) / 10000; // 0.09% fee
+
         // Verify this contract has enough balance to pay fees
         if (_token == ETH_ADDRESS) {
-            require(address(this).balance >= (_amount * 9) / 10000, "Insufficient ETH for fees");
+            require(address(this).balance >= fee, "Insufficient ETH for fees");
         } else {
-            require(IERC20(_token).balanceOf(address(this)) >= (_amount * 9) / 10000, "Insufficient token balance for fees");
+            require(IERC20(_token).balanceOf(address(this)) >= fee, "Insufficient token balance for fees");
         }
 
         bytes memory params = "";

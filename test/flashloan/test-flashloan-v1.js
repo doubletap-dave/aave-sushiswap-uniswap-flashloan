@@ -6,23 +6,32 @@ describe("FlashloanV1", function () {
     async function deployFlashloanV1Fixture() {
         const [owner, user] = await ethers.getSigners();
 
+        // Deploy mock tokens
+        const MockToken = await ethers.getContractFactory("MockERC20");
+        const WETH = await MockToken.deploy("Wrapped Ether", "WETH", 18);
+        const DAI = await MockToken.deploy("Dai Stablecoin", "DAI", 18);
+
+        // Deploy mock lending pool V1
+        const MockLendingPoolV1 = await ethers.getContractFactory("MockLendingPoolV1");
+        const mockLendingPool = await MockLendingPoolV1.deploy();
+
         // Deploy FlashloanV1 contract
         const FlashloanV1 = await ethers.getContractFactory("FlashloanV1");
-        const flashloan = await FlashloanV1.deploy(
-            process.env.AAVE_LENDING_POOL_V1 || "0x24a42fD28C976A61Df5D00D0599C34c4f90748c8"
-        );
+        const flashloan = await FlashloanV1.deploy(mockLendingPool.target);
 
-        // Get token contracts
-        const WETH = await ethers.getContractAt("IERC20", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
-        const DAI = await ethers.getContractAt("IERC20", "0x6B175474E89094C44Da98b954EedeAC495271d0F");
+        // Deploy mock Uniswap V1 router
+        const MockUniswapV1Router = await ethers.getContractFactory("MockUniswapV1Router");
+        const uniswapDai = await MockUniswapV1Router.deploy(DAI.target);
 
-        // Get Uniswap DAI contract
-        const uniswapDai = await ethers.getContractAt(
-            "IUniswapV2Router02",
-            "0x2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667"
-        );
+        // Fund the contracts
+        await owner.sendTransaction({value: ethers.parseEther("100"), to: mockLendingPool.target});
+        await owner.sendTransaction({value: ethers.parseEther("100"), to: uniswapDai.target});
+        await owner.sendTransaction({value: ethers.parseEther("2"), to: flashloan.target}); // For fees
+        await DAI.mint(uniswapDai.target, ethers.parseEther("100000")); // Initial DAI liquidity
+        await DAI.mint(mockLendingPool.target, ethers.parseEther("100000")); // Initial DAI liquidity
+        await DAI.mint(flashloan.target, ethers.parseEther("100")); // For fees
 
-        return { flashloan, WETH, DAI, uniswapDai, owner, user };
+        return { flashloan, WETH, DAI, uniswapDai, mockLendingPool, owner, user };
     }
 
     describe("Basic Flashloan Operations", function () {
