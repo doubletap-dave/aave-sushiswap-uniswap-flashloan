@@ -111,6 +111,9 @@ describe("FlashloanV1", function () {
                 value: ethers.parseEther("2")
             });
 
+            // Mint WETH tokens to cover fees
+            await WETH.mint(flashloan.target, ethers.parseEther("1"));
+
             // Execute and check gas usage
             const tx = await flashloan.flashloan(WETH.target);
             const receipt = await tx.wait();
@@ -126,7 +129,8 @@ describe("FlashloanV1", function () {
             // Try to execute flashloan from non-owner account
             await expect(
                 flashloan.connect(user).flashloan(WETH.target)
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(flashloan, "OwnableUnauthorizedAccount")
+            .withArgs(user.address);
         });
 
         it("Should validate token address", async function () {

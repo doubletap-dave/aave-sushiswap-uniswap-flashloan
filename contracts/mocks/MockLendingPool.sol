@@ -17,14 +17,14 @@ contract MockLendingPool is ILendingPoolV2 {
         // Mock implementation - call executeOperation on the receiver
         uint256[] memory premiums = new uint256[](assets.length);
         for (uint i = 0; i < assets.length; i++) {
-            premiums[i] = 0; // No premium for testing
+            premiums[i] = (amounts[i] * 9) / 10000; // 0.09% premium fee
         }
         
         IFlashLoanReceiverV2(receiverAddress).executeOperation(
             assets,
             amounts,
             premiums,
-            msg.sender,
+            address(this),
             params
         );
     }

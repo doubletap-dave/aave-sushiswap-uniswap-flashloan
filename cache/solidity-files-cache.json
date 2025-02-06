@@ -571,8 +571,8 @@
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\flashloan\\FlashloanArbitrage.sol": {
-      "lastModificationDate": 1738881543650,
-      "contentHash": "a12a56359a618855ecad8aaa8ffdbab7",
+      "lastModificationDate": 1738881990218,
+      "contentHash": "2777bc90f66d962b6b0bd916ed770868",
       "sourceName": "contracts/flashloan/FlashloanArbitrage.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -910,8 +910,8 @@
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\mocks\\MockLendingPool.sol": {
-      "lastModificationDate": 1738879948436,
-      "contentHash": "08ad61794c7a5b2e967220a180a450bb",
+      "lastModificationDate": 1738881999537,
+      "contentHash": "af2fe20f480aec95ec782ea8c2b1f599",
       "sourceName": "contracts/mocks/MockLendingPool.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -1214,6 +1214,45 @@
       ],
       "artifacts": [
         "IUniswapV1Router"
+      ]
+    },
+    "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\mocks\\MockUniswapV2Router.sol": {
+      "lastModificationDate": 1738883675502,
+      "contentHash": "25f7df0c6dce8e06737b7dda851496db",
+      "sourceName": "contracts/mocks/MockUniswapV2Router.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IUniswapV2Router02.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "MockUniswapV2Router"
       ]
     }
   }

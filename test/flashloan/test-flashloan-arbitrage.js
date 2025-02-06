@@ -14,12 +14,17 @@ describe("FlashloanArbitrage", function () {
         const MockLendingPoolAddressesProvider = await ethers.getContractFactory("MockLendingPoolAddressesProvider");
         const mockAddressesProvider = await MockLendingPoolAddressesProvider.deploy(mockLendingPool.target);
 
+        // Deploy mock routers
+        const MockUniswapV2Router = await ethers.getContractFactory("MockUniswapV2Router");
+        const uniswapRouter = await MockUniswapV2Router.deploy();
+        const sushiswapRouter = await MockUniswapV2Router.deploy();
+
         // Deploy FlashloanArbitrage contract
         const FlashloanArbitrage = await ethers.getContractFactory("FlashloanArbitrage");
-const flashloan = await FlashloanArbitrage.deploy(
+        const flashloan = await FlashloanArbitrage.deploy(
             mockAddressesProvider.target,
-            "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // Uniswap V2 Router
-            "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"  // Sushiswap Router
+            uniswapRouter.target,
+            sushiswapRouter.target
         );
 
         // Create mock tokens
@@ -27,13 +32,21 @@ const flashloan = await FlashloanArbitrage.deploy(
         const WETH = await MockToken.deploy("Wrapped Ether", "WETH", 18);
         const DAI = await MockToken.deploy("Dai Stablecoin", "DAI", 18);
 
-        return { flashloan, mockLendingPool, mockAddressesProvider, WETH, DAI, owner, user };
+        // Set initial prices in mock routers
+        await uniswapRouter.setPrice(WETH.target, DAI.target, ethers.parseEther("2000")); // 1 ETH = 2000 DAI
+        await sushiswapRouter.setPrice(WETH.target, DAI.target, ethers.parseEther("2010")); // 1 ETH = 2010 DAI
+        await DAI.mint(uniswapRouter.target, ethers.parseEther("1000000")); // Add liquidity
+        await DAI.mint(sushiswapRouter.target, ethers.parseEther("1000000")); // Add liquidity
+        await WETH.mint(uniswapRouter.target, ethers.parseEther("1000")); // Add liquidity
+        await WETH.mint(sushiswapRouter.target, ethers.parseEther("1000")); // Add liquidity
+
+        return { flashloan, mockLendingPool, mockAddressesProvider, WETH, DAI, owner, user, uniswapRouter, sushiswapRouter };
     }
 
     describe("Deployment", function () {
         it("Should set the right owner", async function () {
             const { flashloan, mockLendingPool, owner } = await loadFixture(deployFlashloanArbitrageFixture);
-            expect(await flashloan.owner()).to.equal(mockLendingPool.target);
+            expect(await flashloan.owner()).to.equal(owner.address);
         });
 
         it("Should initialize with correct Aave lending pool", async function () {
@@ -48,18 +61,21 @@ const flashloan = await FlashloanArbitrage.deploy(
             const { flashloan, mockLendingPool, WETH, owner } = await loadFixture(deployFlashloanArbitrageFixture);
             const amount = ethers.parseEther("10");
 
-            // Ensure contract has enough to cover fees
-            await owner.sendTransaction({
-                to: flashloan.target,
-                value: ethers.parseEther("1")
-            });
+            // Mint tokens to cover fees
+            await WETH.mint(flashloan.target, ethers.parseEther("1")); // Cover fees
+            
+            // Approve lending pool
+            await WETH.connect(flashloan.target).approve(mockLendingPool.target, amount);
 
-            await expect(flashloan.executeOperation(
+            // Execute flashloan directly through lending pool
+            await expect(mockLendingPool.flashLoan(
+                flashloan.target,
                 [WETH.target],
                 [amount],
                 [0],
-                mockLendingPool.target,
-                "0x"
+                owner.address,
+                "0x",
+                0
             )).to.not.be.reverted;
         });
 
@@ -68,18 +84,23 @@ const flashloan = await FlashloanArbitrage.deploy(
             const wethAmount = ethers.parseEther("10");
             const daiAmount = ethers.parseEther("5000");
 
-            // Ensure contract has enough to cover fees
-            await owner.sendTransaction({
-                to: flashloan.target,
-                value: ethers.parseEther("1")
-            });
+            // Mint tokens to cover fees
+            await WETH.mint(flashloan.target, ethers.parseEther("1")); // Cover WETH fees
+            await DAI.mint(flashloan.target, ethers.parseEther("50")); // Cover DAI fees
+            
+            // Approve lending pool
+            await WETH.connect(flashloan.target).approve(mockLendingPool.target, wethAmount);
+            await DAI.connect(flashloan.target).approve(mockLendingPool.target, daiAmount);
 
-            await expect(flashloan.executeOperation(
+            // Execute flashloan directly through lending pool
+            await expect(mockLendingPool.flashLoan(
+                flashloan.target,
                 [WETH.target, DAI.target],
                 [wethAmount, daiAmount],
                 [0, 0],
-                mockLendingPool.target,
-                "0x"
+                owner.address,
+                "0x",
+                0
             )).to.not.be.reverted;
         });
     });
@@ -88,48 +109,59 @@ const flashloan = await FlashloanArbitrage.deploy(
         it("Should calculate correct profit opportunity", async function () {
             const { flashloan, WETH, DAI } = await loadFixture(deployFlashloanArbitrageFixture);
             
-            // Mock prices (implementation will vary based on actual arbitrage logic)
-            const uniswapPrice = ethers.parseEther("2000"); // 1 ETH = 2000 DAI
-            const sushiswapPrice = ethers.parseEther("2010"); // 1 ETH = 2010 DAI
-            
             // Calculate potential profit
             const profit = await flashloan.calculateArbitrageProfitEstimate(
                 WETH.target,
                 DAI.target,
-                ethers.parseEther("1"),
-                uniswapPrice,
-                sushiswapPrice
+                ethers.parseEther("1")
             );
 
             expect(profit).to.be.gt(0);
         });
 
         it("Should revert if no profit opportunity exists", async function () {
-            const { flashloan, WETH, DAI } = await loadFixture(deployFlashloanArbitrageFixture);
+            const { flashloan, WETH, DAI, uniswapRouter, sushiswapRouter } = await loadFixture(deployFlashloanArbitrageFixture);
             
-            // Mock equal prices (no arbitrage opportunity)
+            // Set equal prices on both DEXes
             const price = ethers.parseEther("2000");
+            await uniswapRouter.setPrice(WETH.target, DAI.target, price);
+            await sushiswapRouter.setPrice(WETH.target, DAI.target, price);
+            
+            // Ensure sufficient token balance and approvals
+            await WETH.mint(flashloan.target, ethers.parseEther("1"));
+            await WETH.connect(flashloan.target).approve(uniswapRouter.target, ethers.parseEther("1"));
+            await WETH.connect(flashloan.target).approve(sushiswapRouter.target, ethers.parseEther("1"));
             
             await expect(flashloan.executeArbitrage(
                 WETH.target,
                 DAI.target,
-                ethers.parseEther("1"),
-                price,
-                price
+                ethers.parseEther("1")
             )).to.be.revertedWith("No profitable arbitrage opportunity");
         });
     });
 
     describe("Gas Optimization", function () {
         it("Should execute arbitrage within gas limits", async function () {
-            const { flashloan, mockLendingPool, WETH, DAI, owner } = await loadFixture(deployFlashloanArbitrageFixture);
+            const { flashloan, mockLendingPool, WETH, DAI, owner, uniswapRouter, sushiswapRouter } = await loadFixture(deployFlashloanArbitrageFixture);
             
-            const tx = await flashloan.executeOperation(
+            // Set up price difference for profitable arbitrage
+            await uniswapRouter.setPrice(WETH.target, DAI.target, ethers.parseEther("2000"));
+            await sushiswapRouter.setPrice(WETH.target, DAI.target, ethers.parseEther("2010"));
+            
+            // Mint tokens and approve
+            await WETH.mint(flashloan.target, ethers.parseEther("2")); // Extra for fees
+            await WETH.connect(flashloan.target).approve(mockLendingPool.target, ethers.parseEther("1"));
+            await WETH.connect(flashloan.target).approve(uniswapRouter.target, ethers.parseEther("1"));
+            await WETH.connect(flashloan.target).approve(sushiswapRouter.target, ethers.parseEther("1"));
+            
+            const tx = await mockLendingPool.flashLoan(
+                flashloan.target,
                 [WETH.target],
                 [ethers.parseEther("1")],
                 [0],
-                mockLendingPool.target,
-                "0x"
+                owner.address,
+                "0x",
+                0
             );
             
             const receipt = await tx.wait();
@@ -161,9 +193,7 @@ const flashloan = await FlashloanArbitrage.deploy(
                 flashloan.executeArbitrage(
                     WETH.target,
                     DAI.target,
-                    0, // Invalid amount
-                    ethers.parseEther("2000"),
-                    ethers.parseEther("2010")
+                    0 // Invalid amount
                 )
             ).to.be.revertedWith("Invalid parameters");
         });
