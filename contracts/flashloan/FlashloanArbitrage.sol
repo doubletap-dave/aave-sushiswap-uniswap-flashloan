@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 import "./utils/FlashLoanReceiverBaseV2.sol";
 import "./utils/Withdrawable.sol";
 import "./../interfaces/IUniswapV2Pair.sol";
 import "./../interfaces/IUniswapV2Router02.sol";
 import "./../interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 
 contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
 
@@ -20,7 +18,7 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         address _addressProvider, 
         address _uniswapRouterAddress,
         address _sushiswapRouterAddress
-    ) FlashLoanReceiverBaseV2(_addressProvider) {
+    ) FlashLoanReceiverBaseV2(_addressProvider) Ownable(msg.sender) {
         uniswapRouterAddress = _uniswapRouterAddress;
         sushiswapRouterAddress = _sushiswapRouterAddress;
     }
@@ -33,7 +31,7 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
 
     function pullTokens(address _asset) public onlyOwner {
         IERC20 tokenToPull = IERC20(_asset);
-        tokenToPull.approve(msg.sender , address(this).balance);
+        tokenToPull.approve(msg.sender, address(this).balance);
         tokenToPull.transferFrom(address(this), msg.sender, address(this).balance);
     }
 
@@ -77,9 +75,7 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         return true;
     }
 
-
     function startTransaction(address _borrowAsset, uint256 _borrowAmount, address _swappingPair, address _factoryAddress) public onlyOwner{
-
         // Get pool address and check if it exists
         address poolAddress = IUniswapV2Factory(_factoryAddress).getPair(
             _borrowAsset,
@@ -92,7 +88,6 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         _getFlashloan(_borrowAsset, _borrowAmount, params);
     }
 
-
     // Flash multiple assets 
     // function flashloan(address[] memory assets, uint256[] memory amounts) public onlyOwner {
     //     _flashloan(assets, amounts);
@@ -102,8 +97,6 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
      *  Flash loan 1,000,000,000,000,000,000 wei (1 ether) worth of `_asset`
      */
     function _getFlashloan(address _asset, uint256 _amount, bytes memory _params) internal {
-        // bytes memory data = "";
-
         address[] memory assets = new address[](1);
         assets[0] = _asset;
 
@@ -113,18 +106,13 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         _flashloan(assets, amounts, _params);
     }
 
-
     function _flashloan(address[] memory assets, uint256[] memory amounts, bytes memory params) internal {
-        //We send the flashloan amount to this contract (receiverAddress) so we can make the arbitrage trade
-
+        // We send the flashloan amount to this contract (receiverAddress) so we can make the arbitrage trade
         address receiverAddress = address(this);
-
         address onBehalfOf = address(this);
-        // bytes memory params = "";
         uint16 referralCode = 0;
 
         uint256[] memory modes = new uint256[](assets.length);
-
         // 0 = no debt (flash), 1 = stable, 2 = variable
         for (uint256 i = 0; i < assets.length; i++) {
             modes[i] = 0;
@@ -141,15 +129,12 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         );
     }
 
-
     function makeArbitrage(address _borrowedAsset, uint _borrowedAmount, address _swappingPair) internal returns(uint256){
-
-        //Write a better comparePrice function
+        // Write a better comparePrice function
         Exchange result = _comparePrice(_borrowedAmount, _borrowedAsset, _swappingPair);
         uint amountFinal;
         if (result == Exchange.UNISWAP) {
-
-            // e.g sell WETH in uniswap for DAI with high price and buy WETH from sushiswap with lower price
+            // e.g. sell WETH in uniswap for DAI with high price and buy WETH from sushiswap with lower price
             uint256 amountOut = _swapTokens(
                 _borrowedAmount,
                 uniswapRouterAddress,
@@ -164,8 +149,7 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
                 _borrowedAsset
             );
         } else if (result == Exchange.SUSHI) {
-            
-            // e.g sell WETH in sushiswap for DAI with high price and buy WETH from uniswap with lower price
+            // e.g. sell WETH in sushiswap for DAI with high price and buy WETH from uniswap with lower price
             uint256 amountOut = _swapTokens(
                 _borrowedAmount,
                 sushiswapRouterAddress,
@@ -179,31 +163,29 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
                 _swappingPair,
                 _borrowedAsset
             );
-        }else{
+        } else {
             revert();
         }
-
         return amountFinal;
     }
 
-
-    //This compares the prices of the assets on the individual exchanges i.e Uniswap and Sushiswap
+    // This compares the prices of the assets on the individual exchanges i.e., Uniswap and Sushiswap
     function _comparePrice(uint256 _amount, address _firstToken, address _secondToken) internal view returns (Exchange) {
         uint256 uniswapPrice = _getPrice(
             uniswapRouterAddress,
-            _firstToken, //sell token
-            _secondToken, //buy token
+            _firstToken, // sell token
+            _secondToken, // buy token
             _amount
         );
 
         uint256 sushiswapPrice = _getPrice(
             sushiswapRouterAddress,
-            _firstToken, //sell token
-            _secondToken, //buy token
+            _firstToken, // sell token
+            _secondToken, // buy token
             _amount
         );
 
-        // we try to sell ETH with higher price and buy it back with low price to make profit
+        // We try to sell ETH with higher price and buy it back with lower price to make profit
         if (uniswapPrice > sushiswapPrice) {
             require(
                 _checkIfArbitrageIsProfitable(
@@ -229,7 +211,6 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         }
     }
 
-
     function _swapTokens(
         uint256 amountIn,
         address routerAddress,
@@ -243,7 +224,7 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
             sell_token,
             buy_token,
             amountIn
-        ) * 95) / 100; //Meaning I am expecting to receive at least 95% of the price out.
+        ) * 95) / 100; // Expect to receive at least 95% of the price out.
 
         address[] memory path = new address[](2);
         path[0] = sell_token;
@@ -251,38 +232,25 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
 
         uint256 amountReceived = IUniswapV2Router02(routerAddress)
             .swapExactTokensForTokens(
-                amountIn, /**+-Amount of Tokens we are going to Sell.*/
-                amountOutMin, /**+-Minimum Amount of Tokens that we expect to receive in exchange for our Tokens.*/
-                path, /**+-We tell SushiSwap what token to sell and what token to Buy.*/
-                address(this), /**+-Address of where the Output Tokens are going to be received. i.e this contract address(this) */
-                block.timestamp + 300 /**+-Time Limit after which an order will be rejected by SushiSwap(It is mainly useful if you send an Order directly from your wallet).*/
+                amountIn,           // Amount of Tokens to sell.
+                amountOutMin,       // Minimum tokens expected to receive.
+                path,               // Path of the swap.
+                address(this),      // Recipient address.
+                block.timestamp + 300 // Deadline.
             )[1];
         return amountReceived;
     }
-
 
     function _checkIfArbitrageIsProfitable(
         uint256 amountIn,
         uint256 higherPrice,
         uint256 lowerPrice
     ) internal pure returns (bool) {
-        // Uniswap & Sushiswap have 0.3% fee for every exchange
-        // so gain made must be greater than 2 * 0.3% * arbitrage_amount 
-        //This means 0.3% for Uniswap and another 0.3% for Sushiswap
-        // 0.3 percent means 0.003 or 3/1000
-
-        // difference in ETH
-        //Also, here implies that you are getting the value in wei amount.
-        //After that, then dividing a wei value by an eth value *higherPrice*, means that we are essentially getting (How many eth is in that wei value)
-        // put simply, Wei/eth = how any eth is in the wei
-        uint256 difference = ((higherPrice - lowerPrice) * 10**18) /
-            higherPrice;
-
-        //Remember, Solidity does not deal with decimals so that is why we are dividing by 1000
-        // 0.3 percent means 0.003 or 3/1000
+        // Uniswap & Sushiswap have a 0.3% fee for every exchange,
+        // so the gain made must be greater than 2 * 0.3% of the arbitrage amount.
+        uint256 difference = ((higherPrice - lowerPrice) * 10**18) / higherPrice;
         uint256 paid_fee = (2 * (amountIn * 3)) / 1000;
 
-        //Eth amount minus another Eth
         if (difference > paid_fee) {
             return true;
         } else {
@@ -304,8 +272,6 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
             pairs
         )[1];
 
-        //The return price is in Eth...So you can always multiply by 10**18 to convert to wei
         return price;
     }
-
 }
