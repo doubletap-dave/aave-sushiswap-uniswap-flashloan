@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "../utils/FlashLoanReceiverBaseV2.sol";
 import "../utils/Withdrawable.sol";
@@ -8,7 +8,7 @@ import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
+contract FlashloanArbitrage is FlashLoanReceiverBaseV2, Withdrawable {
     address immutable uniswapRouterAddress;
     address immutable sushiswapRouterAddress;
     uint256 private minimumProfitThreshold;
@@ -88,14 +88,14 @@ contract FlashloanV2 is FlashLoanReceiverBaseV2, Withdrawable {
         uint256[] calldata amounts,
         uint256[] calldata premiums,
         address initiator,
-        bytes calldata params 
+        bytes calldata params
     )
         external
         override
         returns (bool)
     {
         require(msg.sender == address(LENDING_POOL), "Caller must be lending pool");
-        
+
         if (simulateFailure) {
             revert("Arbitrage execution failed");
         }

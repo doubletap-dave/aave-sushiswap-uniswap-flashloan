@@ -571,8 +571,8 @@
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\flashloan\\FlashloanArbitrage.sol": {
-      "lastModificationDate": 1738880196134,
-      "contentHash": "ef554277c5f97106a2c5f88aa57a1df6",
+      "lastModificationDate": 1738880715529,
+      "contentHash": "9bf7d3874f8df406dab71f97efbc6429",
       "sourceName": "contracts/flashloan/FlashloanArbitrage.sol",
       "solcConfig": {
         "version": "0.8.28",
