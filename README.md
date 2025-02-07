@@ -2,13 +2,13 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](package.json)
-[![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.0-blue)](contracts/flashloan/FlashloanV1.sol)
+[![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.0-blue)](contracts/flashloan/FlashloanV3.sol)
 
 A smart contract system for executing flash loan arbitrage between Uniswap and Sushiswap using Aave's flash loan feature.
 
 ## Overview
 
-This project implements an automated arbitrage system that:
+This project implements an automated arbitrage system using Aave V3 (migration complete) that:
 1. Obtains a flash loan from Aave
 2. Executes trades on Uniswap/Sushiswap to capture price differences
 3. Repays the flash loan with fees
@@ -80,13 +80,19 @@ npx hardhat ignition deploy ignition/modules/FlashLoanArb.js --network sepolia
 
 ```solidity
 // Initialize contract
-FlashloanV1 flashloan = new FlashloanV1(LENDING_POOL_ADDRESS);
+FlashloanV3 flashloan = new FlashloanV3(POOL_ADDRESS);
 
-// Execute flash loan with default amount
-flashloan.flashloan(TOKEN_ADDRESS);
+// Execute simple flash loan
+flashloan.flashloanSimple(TOKEN_ADDRESS, AMOUNT);
 
-// Execute flash loan with custom amount
-flashloan.flashloanWithAmount(TOKEN_ADDRESS, AMOUNT);
+// Execute multi-asset flash loan
+address[] memory tokens = new address[](2);
+uint256[] memory amounts = new uint256[](2);
+tokens[0] = TOKEN_A_ADDRESS;
+tokens[1] = TOKEN_B_ADDRESS;
+amounts[0] = AMOUNT_A;
+amounts[1] = AMOUNT_B;
+flashloan.flashloanMultiple(tokens, amounts);
 ```
 
 ## ⚙️ Configuration
@@ -176,7 +182,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Resources
 
-- [Aave V3 Documentation](https://docs.aave.com/developers/v/2.0/)
+- [Aave V3 Documentation](https://docs.aave.com/developers/v/3.0/)
 - [Hardhat Documentation](https://hardhat.org/docs)
 - [Sepolia Testnet Explorer](https://sepolia.etherscan.io/)
 - [Uniswap V2 Documentation](https://docs.uniswap.org/contracts/v2/overview)
