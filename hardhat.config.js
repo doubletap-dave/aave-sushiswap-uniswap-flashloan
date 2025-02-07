@@ -11,11 +11,7 @@ if (dotenvResult.error) {
   throw dotenvResult.error;
 }
 
-// Configure source directory mappings
-const path = require("path");
-
 module.exports = {
-  // Source directory configuration
   paths: {
     sources: "./contracts",
     tests: "./test",
@@ -25,18 +21,25 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.0",
+        version: "0.8.28",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       },
       {
         version: "0.8.20",
-      },
-      {
-        version: "0.8.19",
-      },
-      {
-        version: "0.8.28",
-      },
-    ],
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          },
+          evmVersion: "paris"
+        }
+      }
+    ]
   },
   networks: {
     sepolia: {
@@ -52,10 +55,17 @@ module.exports = {
       ...contractAddresses.mainnet
     },
     hardhat: {
+      forking: {
+        url: process.env.MAINNET_RPC_URL || "",
+        enabled: false
+      },
       ...contractAddresses.hardhat
     }
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY || ""
+  },
+  mocha: {
+    timeout: 100000
   }
 };

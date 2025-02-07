@@ -2,34 +2,36 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](package.json)
-[![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.0-blue)](contracts/flashloan/FlashloanV3.sol)
+[![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.20-blue)](contracts/flashloan/UniswapV4FlashArbitrage.sol)
 
-A smart contract system for executing flash loan arbitrage between Uniswap and Sushiswap using Aave's flash loan feature.
+A smart contract system for executing flash loan arbitrage between Uniswap V4 and Sushiswap using Uniswap's flash accounting feature.
 
 ## Overview
 
-This project implements an automated arbitrage system using Aave V3 (migration complete) that:
-1. Obtains a flash loan from Aave
-2. Executes trades on Uniswap/Sushiswap to capture price differences
-3. Repays the flash loan with fees
-4. Retains the profit from the arbitrage
+This project implements an automated arbitrage system that:
+1. Utilizes Uniswap V4's flash accounting for capital-efficient operations
+2. Executes trades between Uniswap V4 and Sushiswap to capture price differences
+3. Leverages V4's singleton pool architecture for gas optimization
+4. Implements custom hooks for enhanced arbitrage opportunities
 
 <details>
 <summary>🏗 Architecture</summary>
 
-- Smart contracts written in Solidity for flash loan execution and DEX interaction
+- Smart contracts written in Solidity for flash accounting and DEX interaction
 - Hardhat development environment for testing and deployment
-- Integration with Aave V3 lending pools
+- Integration with Uniswap V4 PoolManager
+- Custom hooks for pre and post-swap operations
 - Support for both ETH and ERC20 tokens
-- Gas-optimized contract design (<300k gas per transaction)
+- Gas-optimized contract design using V4's singleton architecture
 </details>
 
 ## 🚀 Key Features
 
-- **Flash Loan Integration**: Seamless integration with Aave's flash loan feature
-- **Multi-DEX Support**: Trade across Uniswap and Sushiswap for optimal arbitrage
-- **Token Support**: Handle both ETH and ERC20 tokens
-- **Gas Optimization**: Efficient contract design for cost-effective execution
+- **Uniswap V4 Integration**: Leveraging V4's singleton pool architecture and hooks system
+- **Flash Accounting**: Efficient capital utilization through V4's native flash accounting
+- **Multi-DEX Support**: Trade across Uniswap V4 and Sushiswap for optimal arbitrage
+- **Custom Hooks**: Pre and post-swap hooks for enhanced arbitrage opportunities
+- **Gas Optimization**: Efficient contract design using V4's architecture
 - **Safety Features**: Built-in checks and balances for secure operation
 - **Owner Controls**: Protected functions for contract management
 
@@ -55,7 +57,8 @@ Required environment variables:
 ```env
 ALCHEMY_API_URL_SEPOLIA=your_alchemy_sepolia_url
 PRIVATE_KEY=your_wallet_private_key
-AAVE_POOL_PROVIDER_ADDRESS=sepolia_pool_provider_address
+UNISWAP_V4_POOL_MANAGER=pool_manager_address
+SUSHISWAP_ROUTER_ADDRESS=sushiswap_router_address
 COINMARKETCAP_API_KEY=optional_for_gas_reporting
 ```
 
@@ -73,37 +76,47 @@ npm test
 
 ### Deploy to Sepolia Testnet
 ```bash
-npx hardhat ignition deploy ignition/modules/FlashLoanArb.js --network sepolia
+npx hardhat run scripts/deployment/migrateToV4.js --network sepolia
 ```
 
-### Example: Execute Flash Loan
+### Example: Execute Flash Arbitrage
 
 ```solidity
-// Initialize contract
-FlashloanV3 flashloan = new FlashloanV3(POOL_ADDRESS);
+// Initialize contracts
+UniswapV4FlashArbitrage arbitrage = new UniswapV4FlashArbitrage(
+    POOL_MANAGER_ADDRESS,
+    SUSHISWAP_ROUTER_ADDRESS,
+    MIN_PROFIT_THRESHOLD
+);
 
-// Execute simple flash loan
-flashloan.flashloanSimple(TOKEN_ADDRESS, AMOUNT);
+// Execute arbitrage with flash accounting
+arbitrage.executeArbitrage(
+    TOKEN0_ADDRESS,
+    TOKEN1_ADDRESS,
+    AMOUNT0,
+    AMOUNT1,
+    HOOK_DATA
+);
 
-// Execute multi-asset flash loan
-address[] memory tokens = new address[](2);
-uint256[] memory amounts = new uint256[](2);
-tokens[0] = TOKEN_A_ADDRESS;
-tokens[1] = TOKEN_B_ADDRESS;
-amounts[0] = AMOUNT_A;
-amounts[1] = AMOUNT_B;
-flashloan.flashloanMultiple(tokens, amounts);
+// Using hooks for custom logic
+UniswapV4ArbitrageHook hook = new UniswapV4ArbitrageHook(
+    POOL_MANAGER_ADDRESS,
+    MIN_PROFIT_THRESHOLD
+);
+
+// Set up hook permissions
+hook.setAuthorizedCaller(ARBITRAGE_CONTRACT, true);
 ```
 
 ## ⚙️ Configuration
 
 <details>
-<summary>Flash Loan Settings</summary>
+<summary>Flash Accounting Settings</summary>
 
-- Default ETH flash loan amount: 1 ETH
-- Default token flash loan amount: 1000 tokens
-- Flash loan fee: 0.05%
-- Minimum balance required: 0.09% of flash loan amount (for fees)
+- Minimum profit threshold: Configurable per deployment
+- Hook permissions: Managed by contract owner
+- Gas optimization: Utilizes V4's singleton architecture
+- Safety checks: Built-in slippage and profit validation
 </details>
 
 <details>
@@ -129,27 +142,28 @@ The project includes comprehensive tests:
 npm test
 
 # Run specific test file
-npx hardhat test test/flashloan/test-flashloan-arbitrage.js
+npx hardhat test test/flashloan/test-flashloan-v4-arbitrage.js
 ```
 
 ### Gas Optimization
 Contract is optimized for gas efficiency:
+- Singleton pool architecture
 - Minimal storage usage
-- Efficient token handling
+- Efficient hook implementation
 - Optimized arbitrage execution path
 
 ## 📄 API Documentation
 
 ### Core Functions
 
-#### `flashloan(address _token)`
-Execute a flash loan with default amount for specified token.
+#### `executeArbitrage(address token0, address token1, uint256 amount0, uint256 amount1, bytes calldata hookData)`
+Execute a flash-accounting-based arbitrage between Uniswap V4 and Sushiswap.
 
-#### `flashloanWithAmount(address _token, uint256 _amount)`
-Execute a flash loan with custom amount for specified token.
+#### `beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params)`
+Hook function called before swap execution for custom validation and setup.
 
-#### `withdrawToken(address _token)`
-Withdraw tokens from the contract (owner only).
+#### `afterSwap(address sender, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta)`
+Hook function called after swap execution for profit capture and cleanup.
 
 ## 🚀 Deployment
 
@@ -158,14 +172,14 @@ Withdraw tokens from the contract (owner only).
 npx hardhat run scripts/validate-deployment-env.js --network sepolia
 ```
 
-2. Deploy contract:
+2. Deploy V4 contracts:
 ```bash
-npx hardhat ignition deploy ignition/modules/FlashLoanArb.js --network sepolia
+npx hardhat run scripts/deployment/migrateToV4.js --network sepolia
 ```
 
 3. Verify on Etherscan:
 ```bash
-npx hardhat verify --network sepolia <deployed_contract_address> <pool_provider_address>
+npx hardhat verify --network sepolia <deployed_contract_address> <constructor_args>
 ```
 
 ## 🤝 Contributing
@@ -182,8 +196,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Resources
 
-- [Aave V3 Documentation](https://docs.aave.com/developers/v/3.0/)
+- [Uniswap V4 Documentation](https://docs.uniswap.org/contracts/v4/overview)
 - [Hardhat Documentation](https://hardhat.org/docs)
 - [Sepolia Testnet Explorer](https://sepolia.etherscan.io/)
-- [Uniswap V2 Documentation](https://docs.uniswap.org/contracts/v2/overview)
 - [Sushiswap Documentation](https://dev.sushi.com/docs/Overview)
