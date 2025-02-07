@@ -18,6 +18,10 @@ contract PoolManager is IUniswapV4PoolManager, ReentrancyGuard {
     
     mapping(bytes32 => PoolState) public pools;
     
+    event Debug(string message, uint256 value);
+    event DebugAddr(string message, address addr);
+    event DebugBalance(string message, address token, uint256 balance);
+    
     function initialize(
         PoolKey memory key,
         uint160 sqrtPriceX96
@@ -88,10 +92,17 @@ contract PoolManager is IUniswapV4PoolManager, ReentrancyGuard {
             key.hooks.beforeSwap(msg.sender, key, params);
         }
         
+        // Get pool state
+        PoolState storage pool = pools[poolId];
+
         // Mock swap calculation
         int256 amount0 = params.zeroForOne ? -params.amountSpecified : int256(0);
         int256 amount1 = params.zeroForOne ? int256(0) : -params.amountSpecified;
-        
+
+        // Update pool state (simplified)
+        pool.sqrtPriceX96 = params.sqrtPriceLimitX96 > 0 ? params.sqrtPriceLimitX96 : pool.sqrtPriceX96;
+        pool.liquidity += uint256(params.amountSpecified); // Just add the amount for simplicity
+
         delta = BalanceDelta({
             amount0: amount0,
             amount1: amount1
@@ -100,12 +111,6 @@ contract PoolManager is IUniswapV4PoolManager, ReentrancyGuard {
         if (address(key.hooks) != address(0)) {
             key.hooks.afterSwap(msg.sender, key, params, delta);
         }
-        
-        // Update pool price
-        PoolState storage pool = pools[poolId];
-        pool.sqrtPriceX96 = params.sqrtPriceLimitX96 > 0 ? 
-            params.sqrtPriceLimitX96 : 
-            pool.sqrtPriceX96;
         
         return delta;
     }
@@ -117,13 +122,13 @@ contract PoolManager is IUniswapV4PoolManager, ReentrancyGuard {
         uint256 amount0,
         uint256 amount1,
         bytes calldata data
-    ) external override nonReentrant {
+    ) external override {
         // Transfer tokens to recipient
         if (amount0 > 0) {
-            IERC20(token0).transfer(recipient, amount0);
+            require(IERC20(token0).transferFrom(msg.sender, recipient, amount0), "Transfer failed");
         }
         if (amount1 > 0) {
-            IERC20(token1).transfer(recipient, amount1);
+            require(IERC20(token1).transferFrom(msg.sender, recipient, amount1), "Transfer failed");
         }
         
         // Call recipient's callback

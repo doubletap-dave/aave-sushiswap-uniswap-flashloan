@@ -133,6 +133,7 @@ contract UniswapV4FlashArbitrage is Ownable, ReentrancyGuard, IFlashCallback {
                 amount1,
                 hookData
             );
+            emit Debug("Uniswap first arbitrage complete", profit);
         } else {
             emit Debug("Executing Sushiswap first", 0);
             // Execute Sushiswap -> Uniswap V4 arbitrage
@@ -143,11 +144,13 @@ contract UniswapV4FlashArbitrage is Ownable, ReentrancyGuard, IFlashCallback {
                 amount1,
                 hookData
             );
+            emit Debug("Sushiswap first arbitrage complete", profit);
         }
 
         emit Debug("Profit calculated", profit);
 
         if (profit < minimumProfitThreshold) {
+            emit Debug("Profit below threshold", profit);
             revert InsufficientProfit();
         }
 
@@ -159,14 +162,18 @@ contract UniswapV4FlashArbitrage is Ownable, ReentrancyGuard, IFlashCallback {
 
         // Repay flash loan
         if (amount0 > 0) {
+            emit Debug("Repaying token0", amount0);
             require(IERC20(token0).balanceOf(address(this)) >= amount0, "Insufficient token0 for repayment");
+            emit Debug("Sufficient token0 balance", amount0);
             require(IERC20(token0).transfer(address(poolManager), amount0), "Token0 transfer failed");
-            emit Debug("Repaid token0", amount0);
+            emit Debug("Token0 transfer complete", amount0);
         }
         if (amount1 > 0) {
+            emit Debug("Repaying token1", amount1);
             require(IERC20(token1).balanceOf(address(this)) >= amount1, "Insufficient token1 for repayment");
+            emit Debug("Sufficient token1 balance", amount1);
             require(IERC20(token1).transfer(address(poolManager), amount1), "Token1 transfer failed");
-            emit Debug("Repaid token1", amount1);
+            emit Debug("Token1 transfer complete", amount1);
         }
 
         emit DebugBalance("Final token0 balance", token0, IERC20(token0).balanceOf(address(this)));
@@ -187,10 +194,8 @@ contract UniswapV4FlashArbitrage is Ownable, ReentrancyGuard, IFlashCallback {
 
         // First swap on Uniswap V4
         PoolKey memory poolKey = _createPoolKey(token0, token1, hookData);
-        // Determine token ordering for swap direction
-        bool zeroForOne = uint256(uint160(token0)) < uint256(uint160(token1));
         SwapParams memory params = SwapParams({
-            zeroForOne: zeroForOne,
+            zeroForOne: true,
             amountSpecified: int256(amount0),
             sqrtPriceLimitX96: 0
         });
@@ -258,18 +263,13 @@ contract UniswapV4FlashArbitrage is Ownable, ReentrancyGuard, IFlashCallback {
         address token0,
         address token1,
         bytes memory hookData
-    ) internal view returns (PoolKey memory) {
-        // Decode hook address from hookData if provided, otherwise use zero address
-        address hookAddress = hookData.length >= 20 ?
-            address(uint160(uint256(bytes32(hookData)) >> 96)) :
-            address(0);
-
+    ) internal pure returns (PoolKey memory) {
         return PoolKey({
             currency0: Currency.wrap(token0),
             currency1: Currency.wrap(token1),
             fee: 3000, // 0.3% fee tier
             tickSpacing: 60,
-            hooks: IHooks(hookAddress)
+            hooks: IHooks(address(0)) // No hooks for direct swaps
         });
     }
 

@@ -1,131 +1,78 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Uniswap V4 Integration", function () {
-  async function deployFixture() {
-    const [owner, user1, user2] = await ethers.getSigners();
-
-    // Deploy mock tokens
-    const MockERC20 = await ethers.getContractFactory("MockERC20");
-    const token0 = await MockERC20.deploy("Token0", "TK0");
-    await token0.waitForDeployment();
-    const token1 = await MockERC20.deploy("Token1", "TK1");
-    await token1.waitForDeployment();
-
-    // Deploy mock Sushiswap router
-    const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
-    const sushiRouter = await MockSushiRouter.deploy();
-    await sushiRouter.waitForDeployment();
-
-    // Deploy PoolManager
-    const PoolManager = await ethers.getContractFactory("PoolManager");
-    const poolManager = await PoolManager.deploy();
-    await poolManager.waitForDeployment();
-
-    // Deploy ArbitrageHook
-    const minProfitThreshold = ethers.parseEther("0.1");
-    const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
-    const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
-    await arbitrageHook.waitForDeployment();
-
-    // Deploy FlashArbitrage
-    const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
-    const flashArbitrage = await FlashArbitrage.deploy(
-      await poolManager.getAddress(),
-      await sushiRouter.getAddress(),
-      minProfitThreshold
-    );
-    await flashArbitrage.waitForDeployment();
-
-    // Initialize pool
-    const poolKey = {
-      currency0: await token0.getAddress(),
-      currency1: await token1.getAddress(),
-      fee: 3000,
-      tickSpacing: 60,
-      hooks: await arbitrageHook.getAddress()
-    };
-
-    // Initial sqrt price for 1:1 price ratio
-    // Using Q64.96 format for sqrtPriceX96
-    const sqrtPriceX96 = BigInt("79228162514264337593543950336"); // 1:1 price in Q64.96
-
-    await poolManager.initialize(poolKey, sqrtPriceX96);
-
-    // Set up permissions
-    await arbitrageHook.setAuthorizedCaller(await flashArbitrage.getAddress(), true);
-
-    // Mint and approve tokens
-    const mintAmount = ethers.parseEther("1000000");
-    
-    // Mint tokens to all contracts
-    await token0.mint(owner.address, mintAmount);
-    await token1.mint(owner.address, mintAmount);
-    await token0.mint(await poolManager.getAddress(), mintAmount);
-    await token1.mint(await poolManager.getAddress(), mintAmount);
-    await token0.mint(await flashArbitrage.getAddress(), mintAmount);
-    await token1.mint(await flashArbitrage.getAddress(), mintAmount);
-    await token0.mint(await sushiRouter.getAddress(), mintAmount);
-    await token1.mint(await sushiRouter.getAddress(), mintAmount);
-    
-    // Approvals from owner
-    await token0.connect(owner).approve(await poolManager.getAddress(), mintAmount);
-    await token1.connect(owner).approve(await poolManager.getAddress(), mintAmount);
-    await token0.connect(owner).approve(await sushiRouter.getAddress(), mintAmount);
-    await token1.connect(owner).approve(await sushiRouter.getAddress(), mintAmount);
-    await token0.connect(owner).approve(await flashArbitrage.getAddress(), mintAmount);
-    await token1.connect(owner).approve(await flashArbitrage.getAddress(), mintAmount);
-
-    // Approvals from FlashArbitrage
-    const flashArbitrageAddress = await flashArbitrage.getAddress();
-    await token0.connect(owner).approve(flashArbitrageAddress, mintAmount);
-    await token1.connect(owner).approve(flashArbitrageAddress, mintAmount);
-    await token0.mint(flashArbitrageAddress, mintAmount);
-    await token1.mint(flashArbitrageAddress, mintAmount);
-
-    // Pre-approve tokens for PoolManager
-    await token0.connect(owner).approve(await poolManager.getAddress(), mintAmount);
-    await token1.connect(owner).approve(await poolManager.getAddress(), mintAmount);
-    await token0.mint(await poolManager.getAddress(), mintAmount);
-    await token1.mint(await poolManager.getAddress(), mintAmount);
-
-    // Set initial Sushiswap price (10% higher than Uniswap)
-    const sushiPrice = ethers.parseEther("1.1");
-    await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), sushiPrice);
-
-    return {
-      token0,
-      token1,
-      poolManager,
-      arbitrageHook,
-      flashArbitrage,
-      sushiRouter,
-      owner,
-      user1,
-      user2,
-      poolKey,
-      minProfitThreshold
-    };
-  }
-
   describe("ArbitrageHook", function () {
     it("Should deploy with correct initial state", async function () {
-      const { arbitrageHook, poolManager, minProfitThreshold } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
       
       expect(await arbitrageHook.poolManager()).to.equal(await poolManager.getAddress());
       expect(await arbitrageHook.minProfitThreshold()).to.equal(minProfitThreshold);
     });
 
     it("Should allow owner to set authorized caller", async function () {
-      const { arbitrageHook, user1 } = await loadFixture(deployFixture);
+      const [owner, user1] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
       
       await arbitrageHook.setAuthorizedCaller(user1.address, true);
       expect(await arbitrageHook.authorizedCallers(user1.address)).to.be.true;
     });
 
     it("Should prevent unauthorized callers from setting permissions", async function () {
-      const { arbitrageHook, user1, user2 } = await loadFixture(deployFixture);
+      const [owner, user1, user2] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
       
       await expect(
         arbitrageHook.connect(user1).setAuthorizedCaller(user2.address, true)
@@ -135,7 +82,34 @@ describe("Uniswap V4 Integration", function () {
 
   describe("FlashArbitrage", function () {
     it("Should deploy with correct initial state", async function () {
-      const { flashArbitrage, poolManager, sushiRouter, minProfitThreshold } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
       
       expect(await flashArbitrage.poolManager()).to.equal(await poolManager.getAddress());
       expect(await flashArbitrage.sushiswapRouter()).to.equal(await sushiRouter.getAddress());
@@ -143,7 +117,39 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should execute flash arbitrage when profitable", async function () {
-      const { flashArbitrage, token0, token1, poolManager } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
       
       const amount0 = ethers.parseEther("1");
       const amount1 = ethers.parseEther("0");
@@ -156,21 +162,53 @@ describe("Uniswap V4 Integration", function () {
 
       await expect(
         flashArbitrage.executeArbitrage(
-          await token0.getAddress(),
-          await token1.getAddress(),
+          token0.getAddress(),
+          token1.getAddress(),
           amount0,
           amount1,
           hookData
         )
       ).to.emit(flashArbitrage, "FlashOperationStarted")
-        .withArgs(await token0.getAddress(), await token1.getAddress(), amount0, amount1);
+        .withArgs(token0.getAddress(), token1.getAddress(), amount0, amount1);
     });
 
     it("Should revert if profit is below threshold", async function () {
-      const { flashArbitrage, token0, token1, sushiRouter, poolManager } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
       
       // Set price to make arbitrage unprofitable
-      await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), ethers.parseEther("0.9"));
+      await sushiRouter.setPrice(token0.getAddress(), token1.getAddress(), ethers.parseEther("0.9"));
       
       const amount0 = ethers.parseEther("0.01"); // Small amount
       const amount1 = ethers.parseEther("0");
@@ -183,8 +221,8 @@ describe("Uniswap V4 Integration", function () {
 
       await expect(
         flashArbitrage.executeArbitrage(
-          await token0.getAddress(),
-          await token1.getAddress(),
+          token0.getAddress(),
+          token1.getAddress(),
           amount0,
           amount1,
           hookData
@@ -193,7 +231,39 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should allow owner to set minimum profit threshold", async function () {
-      const { flashArbitrage } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
       
       const newThreshold = ethers.parseEther("0.2");
       await flashArbitrage.setMinimumProfitThreshold(newThreshold);
@@ -201,35 +271,92 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should handle emergency withdrawals correctly", async function () {
-      const { flashArbitrage, token0, owner, user1 } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
+
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
       
       const amount = ethers.parseEther("1");
-      await token0.transfer(await flashArbitrage.getAddress(), amount);
+      await token0.transfer(flashArbitrage.getAddress(), amount);
 
       await expect(
-        flashArbitrage.emergencyWithdraw(await token0.getAddress(), amount, user1.address)
+        flashArbitrage.emergencyWithdraw(token0.getAddress(), amount, user1.address)
       ).to.changeTokenBalance(token0, user1, amount);
     });
   });
 
   describe("Integration Tests", function () {
     it("Should execute complete arbitrage flow", async function () {
-      const { 
-        flashArbitrage, 
-        token0, 
-        token1, 
-        poolManager,
-        sushiRouter,
-        owner 
-      } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
 
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
+      
       // Setup initial liquidity
       const liquidityAmount = ethers.parseEther("100");
-      await token0.transfer(await sushiRouter.getAddress(), liquidityAmount);
-      await token1.transfer(await sushiRouter.getAddress(), liquidityAmount);
+      await token0.transfer(sushiRouter.getAddress(), liquidityAmount);
+      await token1.transfer(sushiRouter.getAddress(), liquidityAmount);
 
       // Create price discrepancy
-      await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), ethers.parseEther("1.1")); // 10% higher on Sushiswap
+      await sushiRouter.setPrice(token0.getAddress(), token1.getAddress(), ethers.parseEther("1.1")); // 10% higher on Sushiswap
 
       // Execute arbitrage
       const amount0 = ethers.parseEther("10");
@@ -237,13 +364,13 @@ describe("Uniswap V4 Integration", function () {
       const hookData = "0x";
 
       // Pre-approve tokens for flash loan repayment
-      await token0.approve(await poolManager.getAddress(), amount0);
-      await token1.approve(await poolManager.getAddress(), amount1);
+      await token0.approve(poolManager.getAddress(), amount0);
+      await token1.approve(poolManager.getAddress(), amount1);
 
       await expect(
         flashArbitrage.executeArbitrage(
-          await token0.getAddress(),
-          await token1.getAddress(),
+          token0.getAddress(),
+          token1.getAddress(),
           amount0,
           amount1,
           hookData
@@ -252,23 +379,55 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should handle failed arbitrage gracefully", async function () {
-      const { flashArbitrage, token0, token1, sushiRouter, poolManager } = await loadFixture(deployFixture);
+      const [owner] = await ethers.getSigners();
 
+      // Deploy mock tokens
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const token0 = await MockERC20.deploy("Token0", "TK0");
+      await token0.waitForDeployment();
+      const token1 = await MockERC20.deploy("Token1", "TK1");
+      await token1.waitForDeployment();
+
+      // Deploy PoolManager
+      const PoolManager = await ethers.getContractFactory("PoolManager");
+      const poolManager = await PoolManager.deploy();
+      await poolManager.waitForDeployment();
+
+      // Deploy mock Sushiswap router
+      const MockSushiRouter = await ethers.getContractFactory("MockUniswapV2Router");
+      const sushiRouter = await MockSushiRouter.deploy();
+      await sushiRouter.waitForDeployment();
+
+      // Deploy ArbitrageHook
+      const minProfitThreshold = ethers.parseEther("0.1");
+      const ArbitrageHook = await ethers.getContractFactory("UniswapV4ArbitrageHook");
+      const arbitrageHook = await ArbitrageHook.deploy(await poolManager.getAddress(), minProfitThreshold);
+      await arbitrageHook.waitForDeployment();
+
+      // Deploy FlashArbitrage
+      const FlashArbitrage = await ethers.getContractFactory("UniswapV4FlashArbitrage");
+      const flashArbitrage = await FlashArbitrage.deploy(
+        await poolManager.getAddress(),
+        await sushiRouter.getAddress(),
+        minProfitThreshold
+      );
+      await flashArbitrage.waitForDeployment();
+      
       // Set price to make arbitrage unprofitable
-      await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), ethers.parseEther("0.9"));
+      await sushiRouter.setPrice(token0.getAddress(), token1.getAddress(), ethers.parseEther("0.9"));
 
       const amount0 = ethers.parseEther("1");
       const amount1 = ethers.parseEther("0");
       const hookData = "0x";
 
       // Pre-approve tokens for flash loan repayment
-      await token0.approve(await poolManager.getAddress(), amount0);
-      await token1.approve(await poolManager.getAddress(), amount1);
+      await token0.approve(poolManager.getAddress(), amount0);
+      await token1.approve(poolManager.getAddress(), amount1);
 
       await expect(
         flashArbitrage.executeArbitrage(
-          await token0.getAddress(),
-          await token1.getAddress(),
+          token0.getAddress(),
+          token1.getAddress(),
           amount0,
           amount1,
           hookData
