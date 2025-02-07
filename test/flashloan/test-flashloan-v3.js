@@ -26,7 +26,7 @@ describe("FlashloanV3", function () {
 
         // Deploy FlashloanV3
         const FlashloanV3 = await ethers.getContractFactory("FlashloanV3");
-        flashLoan = await (await FlashloanV3.deploy(mockPool.address)).waitForDeployment();
+        flashLoan = await (await FlashloanV3.deploy(await mockPool.getAddress())).waitForDeployment();
 
         // Fund mock tokens
         await mockToken.mint(await mockPool.getAddress(), ethers.parseEther("1000000"));
@@ -64,24 +64,25 @@ describe("FlashloanV3", function () {
             const amount = ethers.parseEther("2000000000"); // 2 billion tokens
             
             await expect(
-                flashLoan.flashloanSimple(mockToken.address, amount)
+                flashLoan.flashloanSimple(await mockToken.getAddress(), amount)
             ).to.be.revertedWithCustomError(flashLoan, "AmountTooLarge");
         });
 
         it("Should revert if token address is zero", async function () {
-            const amount = ethers.utils.parseEther("1000");
+            const amount = ethers.parseEther("1000");
             
             await expect(
-                flashLoan.flashloanSimple(ethers.constants.AddressZero, amount)
+                flashLoan.flashloanSimple(ethers.ZeroAddress, amount)
             ).to.be.revertedWithCustomError(flashLoan, "InvalidToken");
         });
 
         it("Should revert if called by non-owner", async function () {
-            const amount = ethers.utils.parseEther("1000");
+            const amount = ethers.parseEther("1000");
             
             await expect(
-                flashLoan.connect(addr1).flashloanSimple(mockToken.address, amount)
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+                flashLoan.connect(addr1).flashloanSimple(await mockToken.getAddress(), amount)
+            ).to.be.revertedWithCustomError(flashLoan, "OwnableUnauthorizedAccount")
+            .withArgs(await addr1.getAddress());
         });
     });
 
@@ -142,13 +143,13 @@ describe("FlashloanV3", function () {
             await flashLoan.withdrawToken(await mockToken.getAddress());
             
             expect(await mockToken.balanceOf(await owner.getAddress()))
-                .to.equal(initialBalance.add(amount));
+                .to.equal(initialBalance + amount);
         });
 
         it("Should allow owner to withdraw ETH", async function () {
             const amount = ethers.parseEther("1.0");
             await owner.sendTransaction({
-                to: flashLoan.address,
+                to: await flashLoan.getAddress(),
                 value: amount
             });
 
@@ -157,7 +158,7 @@ describe("FlashloanV3", function () {
                 "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
             );
             const receipt = await tx.wait();
-            const gasCost = receipt.gasUsed * tx.gasPrice;
+            const gasCost = receipt.gasUsed * receipt.gasPrice;
 
             const finalBalance = await ethers.provider.getBalance(await owner.getAddress());
             expect(finalBalance).to.equal(

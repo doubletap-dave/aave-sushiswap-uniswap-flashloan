@@ -1026,8 +1026,8 @@
       ]
     },
     "C:\\Users\\dave\\Source\\aave-sushiswap-uniswap-flashloan\\contracts\\flashloan\\FlashloanV3.sol": {
-      "lastModificationDate": 1738886632319,
-      "contentHash": "fb1af8e56ad5ddfd2ed7c1c2e82e1734",
+      "lastModificationDate": 1738887012806,
+      "contentHash": "fba6ddcc32003dc1969b64faaf221c84",
       "sourceName": "contracts/flashloan/FlashloanV3.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -1059,7 +1059,8 @@
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
         "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
-        "../interfaces/IPool.sol"
+        "../interfaces/IPool.sol",
+        "../mocks/MockPool.sol"
       ],
       "versionPragmas": [
         "^0.8.0"

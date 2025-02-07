@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../interfaces/IPool.sol";
+import "../mocks/MockPool.sol";
 
 /**
  * @title FlashloanV3
  * @notice Implements flash loan functionality using Aave V3
  * @dev Enhanced version with V3 features, security improvements, and gas optimizations
  */
-contract FlashloanV3 is Ownable, ReentrancyGuard {
+contract FlashloanV3 is Ownable, ReentrancyGuard, IFlashLoanSimpleReceiver, IFlashLoanReceiver {
     using SafeERC20 for IERC20;
 
     // Constants
@@ -128,7 +129,31 @@ contract FlashloanV3 is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Callback function for flash loan execution
+     * @notice Callback function for single asset flash loan execution
+     * @dev Implements the logic to be executed after receiving the flash loan
+     */
+    function executeOperation(
+        address asset,
+        uint256 amount,
+        uint256 premium,
+        address initiator,
+        bytes calldata params
+    ) external override returns (bool) {
+        require(msg.sender == address(POOL), "Callback only from POOL");
+        require(initiator == address(this), "Callback only from this contract");
+
+        // Implement your flash loan logic here
+        // For example: arbitrage, liquidations, etc.
+
+        // Approve repayment
+        uint256 amountOwed = amount + premium;
+        IERC20(asset).approve(address(POOL), amountOwed);
+
+        return true;
+    }
+
+    /**
+     * @notice Callback function for multi-asset flash loan execution
      * @dev Implements the logic to be executed after receiving the flash loan
      */
     function executeOperation(
@@ -137,7 +162,7 @@ contract FlashloanV3 is Ownable, ReentrancyGuard {
         uint256[] calldata premiums,
         address initiator,
         bytes calldata params
-    ) external returns (bool) {
+    ) external override returns (bool) {
         require(msg.sender == address(POOL), "Callback only from POOL");
         require(initiator == address(this), "Callback only from this contract");
 
