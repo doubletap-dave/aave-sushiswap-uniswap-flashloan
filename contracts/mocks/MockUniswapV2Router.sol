@@ -8,8 +8,13 @@ contract MockUniswapV2Router is IUniswapV2Router02 {
     mapping(address => mapping(address => uint256)) public prices;
     mapping(address => uint256) public tokenBalances;
 
+    event Debug(string message, uint256 value);
+    event DebugAddr(string message, address addr);
+    event DebugBalance(string message, address token, uint256 balance);
+
     function setPrice(address tokenIn, address tokenOut, uint256 price) external {
         prices[tokenIn][tokenOut] = price;
+        emit Debug("Price set", price);
     }
 
     function swapExactTokensForTokens(
@@ -25,13 +30,29 @@ contract MockUniswapV2Router is IUniswapV2Router02 {
         address tokenIn = path[0];
         address tokenOut = path[path.length - 1];
 
+        emit DebugAddr("Swapping from", tokenIn);
+        emit DebugAddr("Swapping to", tokenOut);
+        emit Debug("Amount in", amountIn);
+        emit DebugBalance("Pre-swap tokenIn balance", tokenIn, IERC20(tokenIn).balanceOf(address(this)));
+        emit DebugBalance("Pre-swap tokenOut balance", tokenOut, IERC20(tokenOut).balanceOf(address(this)));
+
         // Calculate output amount based on price
         uint256 amountOut = (amountIn * prices[tokenIn][tokenOut]) / 1e18;
         require(amountOut >= amountOutMin, "Insufficient output amount");
 
         // Transfer tokens
-        require(IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "Transfer in failed");
-        require(IERC20(tokenOut).transfer(to, amountOut), "Transfer out failed");
+        require(
+            IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn),
+            "Transfer in failed"
+        );
+        require(
+            IERC20(tokenOut).transfer(to, amountOut),
+            "Transfer out failed"
+        );
+
+        emit Debug("Amount out", amountOut);
+        emit DebugBalance("Post-swap tokenIn balance", tokenIn, IERC20(tokenIn).balanceOf(address(this)));
+        emit DebugBalance("Post-swap tokenOut balance", tokenOut, IERC20(tokenOut).balanceOf(address(this)));
 
         // Return amounts
         amounts = new uint256[](path.length);

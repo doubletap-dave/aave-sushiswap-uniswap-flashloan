@@ -59,17 +59,40 @@ describe("Uniswap V4 Integration", function () {
     // Mint and approve tokens
     const mintAmount = ethers.parseEther("1000000");
     
-    // Mint to owner and PoolManager
+    // Mint tokens to all contracts
     await token0.mint(owner.address, mintAmount);
     await token1.mint(owner.address, mintAmount);
     await token0.mint(await poolManager.getAddress(), mintAmount);
     await token1.mint(await poolManager.getAddress(), mintAmount);
+    await token0.mint(await flashArbitrage.getAddress(), mintAmount);
+    await token1.mint(await flashArbitrage.getAddress(), mintAmount);
+    await token0.mint(await sushiRouter.getAddress(), mintAmount);
+    await token1.mint(await sushiRouter.getAddress(), mintAmount);
     
-    // Approvals
-    await token0.approve(await poolManager.getAddress(), mintAmount);
-    await token1.approve(await poolManager.getAddress(), mintAmount);
-    await token0.approve(await sushiRouter.getAddress(), mintAmount);
-    await token1.approve(await sushiRouter.getAddress(), mintAmount);
+    // Approvals from owner
+    await token0.connect(owner).approve(await poolManager.getAddress(), mintAmount);
+    await token1.connect(owner).approve(await poolManager.getAddress(), mintAmount);
+    await token0.connect(owner).approve(await sushiRouter.getAddress(), mintAmount);
+    await token1.connect(owner).approve(await sushiRouter.getAddress(), mintAmount);
+    await token0.connect(owner).approve(await flashArbitrage.getAddress(), mintAmount);
+    await token1.connect(owner).approve(await flashArbitrage.getAddress(), mintAmount);
+
+    // Approvals from FlashArbitrage
+    const flashArbitrageAddress = await flashArbitrage.getAddress();
+    await token0.connect(owner).approve(flashArbitrageAddress, mintAmount);
+    await token1.connect(owner).approve(flashArbitrageAddress, mintAmount);
+    await token0.mint(flashArbitrageAddress, mintAmount);
+    await token1.mint(flashArbitrageAddress, mintAmount);
+
+    // Pre-approve tokens for PoolManager
+    await token0.connect(owner).approve(await poolManager.getAddress(), mintAmount);
+    await token1.connect(owner).approve(await poolManager.getAddress(), mintAmount);
+    await token0.mint(await poolManager.getAddress(), mintAmount);
+    await token1.mint(await poolManager.getAddress(), mintAmount);
+
+    // Set initial Sushiswap price (10% higher than Uniswap)
+    const sushiPrice = ethers.parseEther("1.1");
+    await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), sushiPrice);
 
     return {
       token0,
@@ -120,11 +143,16 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should execute flash arbitrage when profitable", async function () {
-      const { flashArbitrage, token0, token1, poolKey } = await loadFixture(deployFixture);
+      const { flashArbitrage, token0, token1, poolManager } = await loadFixture(deployFixture);
       
       const amount0 = ethers.parseEther("1");
       const amount1 = ethers.parseEther("0");
       const hookData = "0x";
+
+      // Pre-approve tokens for flash loan repayment
+      const flashArbitrageAddress = await flashArbitrage.getAddress();
+      await token0.approve(await poolManager.getAddress(), amount0);
+      await token1.approve(await poolManager.getAddress(), amount1);
 
       await expect(
         flashArbitrage.executeArbitrage(
@@ -139,11 +167,19 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should revert if profit is below threshold", async function () {
-      const { flashArbitrage, token0, token1 } = await loadFixture(deployFixture);
+      const { flashArbitrage, token0, token1, sushiRouter, poolManager } = await loadFixture(deployFixture);
+      
+      // Set price to make arbitrage unprofitable
+      await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), ethers.parseEther("0.9"));
       
       const amount0 = ethers.parseEther("0.01"); // Small amount
       const amount1 = ethers.parseEther("0");
       const hookData = "0x";
+
+      // Pre-approve tokens for flash loan repayment
+      const flashArbitrageAddress = await flashArbitrage.getAddress();
+      await token0.approve(await poolManager.getAddress(), amount0);
+      await token1.approve(await poolManager.getAddress(), amount1);
 
       await expect(
         flashArbitrage.executeArbitrage(
@@ -200,6 +236,10 @@ describe("Uniswap V4 Integration", function () {
       const amount1 = ethers.parseEther("0");
       const hookData = "0x";
 
+      // Pre-approve tokens for flash loan repayment
+      await token0.approve(await poolManager.getAddress(), amount0);
+      await token1.approve(await poolManager.getAddress(), amount1);
+
       await expect(
         flashArbitrage.executeArbitrage(
           await token0.getAddress(),
@@ -212,12 +252,18 @@ describe("Uniswap V4 Integration", function () {
     });
 
     it("Should handle failed arbitrage gracefully", async function () {
-      const { flashArbitrage, token0, token1 } = await loadFixture(deployFixture);
+      const { flashArbitrage, token0, token1, sushiRouter, poolManager } = await loadFixture(deployFixture);
 
-      // Setup with unprofitable conditions
+      // Set price to make arbitrage unprofitable
+      await sushiRouter.setPrice(await token0.getAddress(), await token1.getAddress(), ethers.parseEther("0.9"));
+
       const amount0 = ethers.parseEther("1");
       const amount1 = ethers.parseEther("0");
       const hookData = "0x";
+
+      // Pre-approve tokens for flash loan repayment
+      await token0.approve(await poolManager.getAddress(), amount0);
+      await token1.approve(await poolManager.getAddress(), amount1);
 
       await expect(
         flashArbitrage.executeArbitrage(

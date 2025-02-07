@@ -16,6 +16,10 @@ contract MockPoolManager is IUniswapV4PoolManager {
     }
     
     mapping(bytes32 => PoolState) public pools;
+
+    event Debug(string message, uint256 value);
+    event DebugAddr(string message, address addr);
+    event DebugBalance(string message, address token, uint256 balance);
     
     function initialize(
         PoolKey memory key,
@@ -116,6 +120,11 @@ contract MockPoolManager is IUniswapV4PoolManager {
         uint256 amount1,
         bytes calldata data
     ) external override {
+        emit DebugAddr("Flash called by", msg.sender);
+        emit DebugAddr("Recipient", recipient);
+        emit DebugBalance("Initial token0 balance", token0, IERC20(token0).balanceOf(address(this)));
+        emit DebugBalance("Initial token1 balance", token1, IERC20(token1).balanceOf(address(this)));
+
         // Save initial balances
         uint256 initialBalance0 = IERC20(token0).balanceOf(address(this));
         uint256 initialBalance1 = IERC20(token1).balanceOf(address(this));
@@ -123,9 +132,11 @@ contract MockPoolManager is IUniswapV4PoolManager {
         // Transfer tokens to recipient
         if (amount0 > 0) {
             require(IERC20(token0).transfer(recipient, amount0), "Transfer failed");
+            emit Debug("Transferred token0", amount0);
         }
         if (amount1 > 0) {
             require(IERC20(token1).transfer(recipient, amount1), "Transfer failed");
+            emit Debug("Transferred token1", amount1);
         }
         
         // Call recipient's callback
@@ -141,15 +152,24 @@ contract MockPoolManager is IUniswapV4PoolManager {
         (bool success,) = recipient.call(callData);
         require(success, "Flash callback failed");
         
-        // Verify tokens were returned
+        // Verify tokens were returned using transferFrom
         if (amount0 > 0) {
-            uint256 finalBalance0 = IERC20(token0).balanceOf(address(this));
-            require(finalBalance0 >= initialBalance0, "Flash loan 0 not repaid");
+            require(
+                IERC20(token0).transferFrom(recipient, address(this), amount0),
+                "Flash loan 0 not repaid"
+            );
+            emit Debug("Repaid token0", amount0);
         }
         if (amount1 > 0) {
-            uint256 finalBalance1 = IERC20(token1).balanceOf(address(this));
-            require(finalBalance1 >= initialBalance1, "Flash loan 1 not repaid");
+            require(
+                IERC20(token1).transferFrom(recipient, address(this), amount1),
+                "Flash loan 1 not repaid"
+            );
+            emit Debug("Repaid token1", amount1);
         }
+
+        emit DebugBalance("Final token0 balance", token0, IERC20(token0).balanceOf(address(this)));
+        emit DebugBalance("Final token1 balance", token1, IERC20(token1).balanceOf(address(this)));
     }
     
     function getSqrtPriceX96(PoolKey memory key) external view returns (uint160) {
